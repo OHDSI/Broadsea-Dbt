@@ -17,6 +17,13 @@ DBT_PROFILE_PATH=./profiles
 
 The paths are relative to the current directory and will be mounted as volumes in the broadsea-dbt container.
 
+You can configure the database connection by updating the profiles.yml file. See an example
+in the example_dbt_profiles directory.
+
+Note. Currently the only supoorted DBMS in this Docker container is PostgreSQL. The Dockerfile can be updated
+to include support for other DBMSs that are supported by dbt, including Snowflake and Redshift.
+
+
 ## Usage
 
 You can run DBT commands using Docker Compose:
