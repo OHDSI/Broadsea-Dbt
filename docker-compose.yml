@@ -35,7 +35,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: ohdsi/broadsea-dbt
+    image: ohdsi/broadsea-dbt:1.0.0
     volumes:
       - ./example_dbt_project:/usr/app
       - ./example_dbt_profiles:/root/.dbt/
