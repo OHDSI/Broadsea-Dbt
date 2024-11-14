@@ -104,7 +104,15 @@ jobs:
       - name: Pull Docker image from Docker Hub
         run: |
            docker pull ${{ env.DOCKER_IMAGE }}:${{ env.VERSION }}
-  
-      - name: Run Docker Scout Quickview
+
+      - name: Run Docker Scout show Software Bill Of Materials
+        run: |
+           docker scout sbom ${{ env.DOCKER_IMAGE }}:${{ env.VERSION }}
+           
+      - name: Run Docker Scout show Quickview
         run: |
            docker scout quickview ${{ env.DOCKER_IMAGE }}:${{ env.VERSION }}
+
+      - name: Run Docker scout show CVEs
+        run: |
+           docker scout cves ${{ env.DOCKER_IMAGE }}:${{ env.VERSION }}
