@@ -3,10 +3,7 @@ name: build-and-push-docker-image
 
 on:
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version number (e.g., 1.0.0)'
-        required: true
+
 #  push:
 #    branches:
 #      - main
@@ -15,6 +12,7 @@ on:
 
 env:
   DOCKER_IMAGE: ohdsi/broadsea-dbt
+  VERSION: "1.0.0" 
 
 jobs:
 
@@ -39,11 +37,11 @@ jobs:
         with:
           images: ${{ env.DOCKER_IMAGE }}
           tags: |
-            type=raw,value=${{ github.event.inputs.version }}
+            type=raw,value=${{ env.VERSION }}
             type=sha
             type=raw,value=latest
           labels: |
-            org.opencontainers.image.version=${{ github.event.inputs.version }}
+            org.opencontainers.image.version=${{ env.VERSION }}
             org.opencontainers.image.source=${{ github.repository }}
             org.opencontainers.image.created=${{ steps.docker_meta.outputs.created }}
             org.opencontainers.image.revision=${{ github.sha }}
@@ -80,7 +78,7 @@ jobs:
           push: ${{ steps.build_params.outputs.push }}
           load: ${{ steps.build_params.outputs.load }}
           build-args: |
-            GIT_BRANCH=${{ github.event.inputs.version }}
+            GIT_BRANCH=${{ env.VERSION }}
             GIT_COMMIT_ID_ABBREV=${{ steps.build_params.outputs.sha8 }}
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: |
@@ -98,3 +96,15 @@ jobs:
   #    - name: Inspect image
   #      run: |
   #        docker image inspect ${{ env.DOCKER_IMAGE }}:${{ steps.docker_meta.outputs.version }}
+
+      - name: Install Docker Scout
+        run: |
+          curl -Ls https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | sh
+  
+      - name: Pull Docker image from Docker Hub
+        run: |
+           docker pull ${{ env.DOCKER_IMAGE }}:${{ env.VERSION }}
+  
+      - name: Run Docker Scout Quickview
+        run: |
+           docker scout quickview ${{ env.DOCKER_IMAGE }}:${{ env.VERSION }}
