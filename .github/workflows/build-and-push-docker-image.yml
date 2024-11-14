@@ -2,9 +2,16 @@
 name: build-and-push-docker-image
 
 on:
-  workflow_dispatch:  # Supports manual triggering
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 1.0.0)'
+        required: true
 #  push:
-#    branches: [ main ]
+#    branches:
+#      - main
+#    tags:
+#      - '*'
 
 env:
   DOCKER_IMAGE: ohdsi/broadsea-dbt
@@ -26,20 +33,20 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildx-
 
-      - name: Extract Docker metadata (tags, labels)
+      - name: Docker meta
         id: docker_meta
-        uses: docker/metadata-action@v4
+        uses: crazy-max/ghaction-docker-meta@v1
         with:
           images: ${{ env.DOCKER_IMAGE }}
           tags: |
-            type=semver,pattern={{version}}          # Tag based on Git semantic version tag (e.g., "2.2.0")
-            type=sha                                 # Tag based on commit SHA (e.g., "mycontainer:<commit-sha>")
-            type=raw,value=latest                    # Static "latest" tag
+            type=raw,value=${{ github.event.inputs.version }}
+            type=sha
+            type=raw,value=latest
           labels: |
-            org.opencontainers.image.version={{version}}
-            org.opencontainers.image.source={{source}}
-            org.opencontainers.image.created={{timestamp}}
-            org.opencontainers.image.revision={{sha}}
+            org.opencontainers.image.version=${{ github.event.inputs.version }}
+            org.opencontainers.image.source=${{ github.repository }}
+            org.opencontainers.image.created=${{ steps.docker_meta.outputs.created }}
+            org.opencontainers.image.revision=${{ github.sha }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -73,7 +80,7 @@ jobs:
           push: ${{ steps.build_params.outputs.push }}
           load: ${{ steps.build_params.outputs.load }}
           build-args: |
-            GIT_BRANCH=${{ steps.docker_meta.outputs.version }}
+            GIT_BRANCH=${{ github.event.inputs.version }}
             GIT_COMMIT_ID_ABBREV=${{ steps.build_params.outputs.sha8 }}
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: |
