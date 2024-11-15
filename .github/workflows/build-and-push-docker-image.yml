@@ -18,7 +18,7 @@ on:
 
 env:
   DOCKER_IMAGE: ohdsi/broadsea-dbt
-  VERSION: "1.0.0" 
+  DOCKER_IMAGE_VERSION: "1.0.0" 
 
 jobs:
 
@@ -43,11 +43,11 @@ jobs:
         with:
           images: ${{ env.DOCKER_IMAGE }}
           tags: |
-            type=raw,value=${{ env.VERSION }}
+            type=raw,value=${{ env.DOCKER_IMAGE_VERSION }}
             type=sha
             type=raw,value=latest
           labels: |
-            org.opencontainers.image.version=${{ env.VERSION }}
+            org.opencontainers.image.version=${{ env.DOCKER_IMAGE_VERSION }}
             org.opencontainers.image.source=${{ github.repository }}
             org.opencontainers.image.created=${{ steps.docker_meta.outputs.created }}
             org.opencontainers.image.revision=${{ github.sha }}
@@ -102,11 +102,11 @@ jobs:
             
       - name: Pull Docker image from Docker Hub
         run: |
-           docker pull ${{ env.DOCKER_IMAGE }}:${{ env.VERSION }}
+           docker pull ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_IMAGE_VERSION }}
 
       - name: Inspect image
         run: |
-          docker image inspect ${{ env.DOCKER_IMAGE }}:${{ steps.docker_meta.outputs.version }}
+          docker image inspect ${{ env.DOCKER_IMAGE }}:${{ steps.docker_meta.outputs.DOCKER_IMAGE_VERSION }}
 
       - name: Install Docker Scout
         run: |
@@ -114,11 +114,11 @@ jobs:
 
       - name: Run Docker Scout to show Quickview
         run: |
-           docker scout quickview ${{ env.DOCKER_IMAGE }}:${{ env.VERSION }}
+           docker scout quickview ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_IMAGE_VERSION }}
       
       - name: Run Docker Scout to generate Software Bill Of Materials as a list
         run: |
-           docker scout sbom --format list ${{ env.DOCKER_IMAGE }}:${{ env.VERSION }} | tee sbom-${{ steps.build_params.outputs.sha8 }}-${{ steps.build_params.outputs.datetime }}.txt
+           docker scout sbom --format list ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_IMAGE_VERSION }} | tee sbom-${{ steps.build_params.outputs.sha8 }}-${{ steps.build_params.outputs.datetime }}.txt
 
       - name: Upload SBOM report as an artifact retained for 90 days
         uses: actions/upload-artifact@v3
@@ -129,7 +129,7 @@ jobs:
           
       - name: Run Docker scout to generate list of CVEs
         run: |
-           docker scout cves ${{ env.DOCKER_IMAGE }}:${{ env.VERSION }} | tee cves-${{ steps.build_params.outputs.sha8 }}-${{ steps.build_params.outputs.datetime }}.txt
+           docker scout cves ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_IMAGE_VERSION }} | tee cves-${{ steps.build_params.outputs.sha8 }}-${{ steps.build_params.outputs.datetime }}.txt
 
       - name: Upload CVE Report as an artifact retained for 90 days
         uses: actions/upload-artifact@v3
