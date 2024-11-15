@@ -2,7 +2,13 @@
 name: build-and-push-docker-image
 
 on:
+
+  # support manual trigger of this action
   workflow_dispatch:
+
+  # Run this action every Saturday at midnight UTC
+  schedule:
+    - cron: '0 0 * * 6'
 
 #  push:
 #    branches:
@@ -55,6 +61,7 @@ jobs:
       - name: Set build parameters
         id: build_params
         run: |
+          echo "datetime=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
           echo "sha8=${GITHUB_SHA::8}" >> $GITHUB_OUTPUT
           echo "push=false" >> $GITHUB_OUTPUT
           echo "load=false" >> $GITHUB_OUTPUT
@@ -92,27 +99,41 @@ jobs:
         run: |
           echo "Generated tags: ${{ steps.docker_meta.outputs.tags }}"
           echo "Generated labels: ${{ steps.docker_meta.outputs.labels }}"
-          
-  #    - name: Inspect image
-  #      run: |
-  #        docker image inspect ${{ env.DOCKER_IMAGE }}:${{ steps.docker_meta.outputs.version }}
-
-      - name: Install Docker Scout
-        run: |
-          curl -Ls https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | sh
-  
+            
       - name: Pull Docker image from Docker Hub
         run: |
            docker pull ${{ env.DOCKER_IMAGE }}:${{ env.VERSION }}
 
-      - name: Run Docker Scout show Software Bill Of Materials
+      - name: Inspect image
         run: |
-           docker scout sbom ${{ env.DOCKER_IMAGE }}:${{ env.VERSION }}
-           
-      - name: Run Docker Scout show Quickview
+          docker image inspect ${{ env.DOCKER_IMAGE }}:${{ steps.docker_meta.outputs.version }}
+
+      - name: Install Docker Scout
+        run: |
+          curl -Ls https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | sh
+
+      - name: Run Docker Scout to show Quickview
         run: |
            docker scout quickview ${{ env.DOCKER_IMAGE }}:${{ env.VERSION }}
-
-      - name: Run Docker scout show CVEs
+      
+      - name: Run Docker Scout to generate Software Bill Of Materials as a list
         run: |
-           docker scout cves ${{ env.DOCKER_IMAGE }}:${{ env.VERSION }}
+           docker scout sbom --format list ${{ env.DOCKER_IMAGE }}:${{ env.VERSION }} | tee sbom-${{ steps.build_params.outputs.sha8 }}-${{ steps.build_params.outputs.datetime }}.txt
+
+      - name: Upload SBOM report as an artifact retained for 90 days
+        uses: actions/upload-artifact@v3
+        with:
+          name: sbom-${{ steps.build_params.outputs.sha8 }}-${{ steps.build_params.outputs.datetime }}
+          path: sbom-${{ steps.build_params.outputs.sha8 }}-${{ steps.build_params.outputs.datetime }}.txt
+          retention-days: 90
+          
+      - name: Run Docker scout to generate list of CVEs
+        run: |
+           docker scout cves ${{ env.DOCKER_IMAGE }}:${{ env.VERSION }} | tee cves-${{ steps.build_params.outputs.sha8 }}-${{ steps.build_params.outputs.datetime }}.txt
+
+      - name: Upload CVE Report as an artifact retained for 90 days
+        uses: actions/upload-artifact@v3
+        with:
+          name: cves-${{ steps.build_params.outputs.sha8 }}-${{ steps.build_params.outputs.datetime }}
+          path: cves-${{ steps.build_params.outputs.sha8 }}-${{ steps.build_params.outputs.datetime }}.txt
+          retention-days: 90
