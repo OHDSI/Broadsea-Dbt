@@ -106,7 +106,7 @@ jobs:
 
       - name: Inspect image
         run: |
-          docker image inspect ${{ env.DOCKER_IMAGE }}:${{ steps.docker_meta.outputs.DOCKER_IMAGE_VERSION }}
+          docker image inspect ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_IMAGE_VERSION }}
 
       - name: Install Docker Scout
         run: |
